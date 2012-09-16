@@ -1,0 +1,146 @@
+BMAC data analysis
+========================================================
+
+Uses data from Britain's Most Admired Companies (http://www.managementtoday.co.uk/go/bmac/).
+
+```{r setup, cache=FALSE, include=FALSE}
+opts_chunk$set(cache=TRUE)
+```
+
+```{r datasetup, echo=FALSE}
+setwd("c:/documents and settings/dbarron/my documents/reputation/BMAC")
+library(plyr)
+library(ggplot2)
+library(reshape)
+library(scales)
+library(RColorBrewer)
+library(car)
+
+bmac2011 <- read.csv("bmac2011.csv")
+bmac2010 <- read.csv("bmac2010.csv")
+bmac2009 <- read.csv("bmac2009.csv")
+ix <- order(bmac2009$Industry,bmac2009$Company)
+bmac2009 <- bmac2009[ix,]
+ix <- order(bmac2010$Industry,bmac2010$Company)
+bmac2010 <- bmac2010[ix,]
+ix <- order(bmac2011$Industry,bmac2011$X)
+bmac2011 <- bmac2011[ix,]
+```
+
+
+Dimensions
+-------------------------------------
+1. Quality of management (QMan)
+2. Financial soundness (FS)
+3. Quality of goods or services (QGS)
+4. Ability to Attract, Develop and Retain Top Talent
+5. Value as a long-term investment (VLTI)
+6. Capacity to innovate (CI)
+7. Quality of marketing (QMar)
+8. Community and Environmental Responsibility (CER)
+9. Use of corporate assets (UCA)
+
+# 2009
+## Descriptive statistics
+
+
+```{r data2009}
+cols <- c(4,6,8,10,12,14,16,18,20)
+tot.col <- 22
+ind.col <- 2
+comp.col <- 3
+inds2009 <- levels(bmac2009[,ind.col])
+dta <- bmac2009[,c(ind.col,comp.col,cols)]
+```
+
+```{r descstats2009, warning=FALSE}
+(means2009 <- ddply(dta,.(Industry), function(x) colMeans(x[,-(1:2)])))
+(sds2009 <- ddply(dta,.(Industry), function(x) sapply(x[,-(1:2)],sd)))
+means2009.m <- melt(means2009)
+means2009.m <- ddply(means2009.m, .(variable), transform, rescale = rescale(value))
+(p <- ggplot(means2009.m, aes(variable, Industry)) + geom_tile(aes(fill = rescale), colour = "white") + scale_fill_gradient(low = "white", high = "steelblue"))
+```
+
+```{r radar2009}
+ind2009 <- dlply(dta,.(Industry))
+for (i in 1:25){
+  x.m <- melt(ind2009[[i]],"Company",3:11)
+  print(ggplot(x.m,aes(variable,Company)) + geom_tile(aes(fill=value),colour='white') + 
+    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2009[i]))
+}
+
+```
+
+## Principal components
+```{r pc2009}
+pc2009 <- prcomp(bmac2009[,cols])
+summary(pc2009)
+pc2009$sdev^2
+```
+```{r pcind2009}
+pcind2009 <- ddply(dta,.(Industry), function(x) {
+  pctmp <- prcomp(x[,-c(1,2)])
+  print(summary(pctmp))
+#  screeplot(pctmp)
+  })
+```
+
+
+# 2010
+
+```{r data2010}
+cols <- c(6,8,10,12,14,16,18,20,22)
+tot.col <- 4
+ind.col <- 3
+comp.col <- 2
+
+inds2010 <- levels(bmac2010[,ind.col])
+dta2010 <- bmac2010[,c(ind.col,comp.col,cols)]
+```
+```{r descstats2010, warning=FALSE}
+(means2010 <- ddply(dta2010,.(Industry), function(x) colMeans(x[,-(1:2)])))
+(sds2010 <- ddply(dta2010,.(Industry), function(x) sapply(x[,-(1:2)],sd)))
+means2010.m <- melt(means2010)
+means2010.m <- ddply(means2010.m, .(variable), transform, rescale = rescale(value))
+(p <- ggplot(means2010.m, aes(variable, Industry)) + geom_tile(aes(fill = rescale), colour = "white") + scale_fill_gradient(low = "white", high = "steelblue"))
+```
+
+
+```{r radar2010}
+ind2010 <- dlply(dta,.(Industry))
+for (i in 1:25){
+  x.m <- melt(ind2010[[i]],"Company",3:11)
+  print(ggplot(x.m,aes(variable,Company)) + geom_tile(aes(fill=value),colour='white') + 
+    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2010[i]))
+}
+```
+
+# 2011
+
+```{r data2011}
+cols <- c(2,4,6,8,10,12,14,16,18)
+tot.col <- 20
+ind.col <- 22
+comp.col <- 1
+
+inds2011 <- levels(bmac2011[,ind.col])
+dta2011 <- bmac2011[,c(ind.col,comp.col,cols)]
+```
+
+```{r descstats2011, warning=FALSE}
+(means2011 <- ddply(dta2011,.(Industry), function(x) colMeans(x[,-(1:2)])))
+(sds2011 <- ddply(dta2011,.(Industry), function(x) sapply(x[,-(1:2)],sd)))
+means2011.m <- melt(means2011)
+means2011.m <- ddply(means2011.m, .(variable), transform, rescale = rescale(value))
+(p <- ggplot(means2011.m, aes(variable, Industry)) + geom_tile(aes(fill = rescale), colour = "white") + scale_fill_gradient(low = "white", high = "steelblue"))
+```
+
+
+```{r radar2011}
+ind2011 <- dlply(dta,.(Industry))
+for (i in 1:25){
+  x.m <- melt(ind2011[[i]],"Company",3:11)
+  print(ggplot(x.m,aes(variable,Company)) + geom_tile(aes(fill=value),colour='white') + 
+    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2010[i]))
+}
+```
