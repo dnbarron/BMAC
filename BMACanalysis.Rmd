@@ -25,6 +25,7 @@ ix <- order(bmac2010$Industry,bmac2010$Company)
 bmac2010 <- bmac2010[ix,]
 ix <- order(bmac2011$Industry,bmac2011$X)
 bmac2011 <- bmac2011[ix,]
+names(bmac2011)[1] <- "Company"
 ```
 
 
@@ -33,7 +34,7 @@ Dimensions
 1. Quality of management (QMan)
 2. Financial soundness (FS)
 3. Quality of goods or services (QGS)
-4. Ability to Attract, Develop and Retain Top Talent
+4. Ability to Attract, Develop and Retain Top Talent (AAT)
 5. Value as a long-term investment (VLTI)
 6. Capacity to innovate (CI)
 7. Quality of marketing (QMar)
@@ -50,23 +51,23 @@ tot.col <- 22
 ind.col <- 2
 comp.col <- 3
 inds2009 <- levels(bmac2009[,ind.col])
-dta <- bmac2009[,c(ind.col,comp.col,cols)]
+dta2009 <- bmac2009[,c(ind.col,comp.col,cols)]
 ```
 
 ```{r descstats2009, warning=FALSE}
-(means2009 <- ddply(dta,.(Industry), function(x) colMeans(x[,-(1:2)])))
-(sds2009 <- ddply(dta,.(Industry), function(x) sapply(x[,-(1:2)],sd)))
+(means2009 <- ddply(dta2009,.(Industry), function(x) colMeans(x[,-(1:2)])))
+(sds2009 <- ddply(dta2009,.(Industry), function(x) sapply(x[,-(1:2)],sd)))
 means2009.m <- melt(means2009)
 means2009.m <- ddply(means2009.m, .(variable), transform, rescale = rescale(value))
 (p <- ggplot(means2009.m, aes(variable, Industry)) + geom_tile(aes(fill = rescale), colour = "white") + scale_fill_gradient(low = "white", high = "steelblue"))
 ```
 
 ```{r radar2009}
-ind2009 <- dlply(dta,.(Industry))
+ind2009 <- dlply(dta2009,.(Industry))
 for (i in 1:25){
   x.m <- melt(ind2009[[i]],"Company",3:11)
   print(ggplot(x.m,aes(variable,Company)) + geom_tile(aes(fill=value),colour='white') + 
-    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2009[i]))
+    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2009[i]) + geom_text(aes(label=value), size=3))
 }
 
 ```
@@ -78,7 +79,7 @@ summary(pc2009)
 pc2009$sdev^2
 ```
 ```{r pcind2009}
-pcind2009 <- ddply(dta,.(Industry), function(x) {
+pcind2009 <- dlply(dta2009,.(Industry), function(x) {
   pctmp <- prcomp(x[,-c(1,2)])
   print(summary(pctmp))
 #  screeplot(pctmp)
@@ -107,12 +108,20 @@ means2010.m <- ddply(means2010.m, .(variable), transform, rescale = rescale(valu
 
 
 ```{r radar2010}
-ind2010 <- dlply(dta,.(Industry))
-for (i in 1:25){
+ind2010 <- dlply(dta2010,.(Industry))
+for (i in 1:length(ind2010)){
   x.m <- melt(ind2010[[i]],"Company",3:11)
   print(ggplot(x.m,aes(variable,Company)) + geom_tile(aes(fill=value),colour='white') + 
-    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2010[i]))
+    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2010[i]) + geom_text(aes(label=value), size=3))
 }
+```
+
+```{r pcind2010}
+pcind2010 <- dlply(dta2010,.(Industry), function(x) {
+  pctmp <- prcomp(x[,-c(1,2)])
+  print(summary(pctmp))
+#  screeplot(pctmp)
+  })
 ```
 
 # 2011
@@ -137,10 +146,40 @@ means2011.m <- ddply(means2011.m, .(variable), transform, rescale = rescale(valu
 
 
 ```{r radar2011}
-ind2011 <- dlply(dta,.(Industry))
+ind2011 <- dlply(dta2011,.(Industry))
 for (i in 1:25){
   x.m <- melt(ind2011[[i]],"Company",3:11)
   print(ggplot(x.m,aes(variable,Company)) + geom_tile(aes(fill=value),colour='white') + 
-    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2010[i]))
+    scale_fill_gradient(low='white',high='steelblue') + ggtitle(inds2011[i]) + geom_text(aes(label=value), size=3))
 }
 ```
+```{r pcind2011}
+pcind2011 <- dlply(dta2011,.(Industry), function(x) {
+  pctmp <- prcomp(x[,-c(1,2)])
+  plot(pctmp$x[,1],pctmp$x[,2])
+  print(summary(pctmp))
+#  screeplot(pctmp)
+  })
+```
+
+# Industries in each year
+Find the industries that are in all three years
+
+```{r industries}
+print("2009")
+inds2009
+print("\n2010")
+inds2010
+print("\n2011")
+inds2011
+
+indsall <- intersect(inds2011,intersect(inds2009,inds2010))
+```
+
+```{r combine}
+ix2009 <- inds2009 %in% indsall
+ix2010 <- inds2010 %in% indsall
+ix2011 <- inds2011 %in% indsall
+
+```
+
